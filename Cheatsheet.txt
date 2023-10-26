@@ -1,0 +1,66 @@
+cd + "ruta" -> selecciono el directorio de trabajo
+
+mkdir + nombre -> creamos una carpeta
+
+touch + requirements.txt(ejemplo) -> creamos un archivo de texto vacío
+
+nano requirements.txt(ejemplo) -> se nos abre una consola donde podemos escribir y guardar en el archivo
+
+conda create --name Practica0 python=3.9 -> creamos un enviroment llamado "Practica0" en Python 3.9
+
+conda activate Practica 0 -> activamos nuestro enviroment
+
+conda/pip install numpy, pandas -> instalamos las librerías numpy y pandas
+
+python -m ipykernel install --user --name Practica0 --display-name "Practica0" -> creamos un kernel para la Practica0
+
+git add . -> agregamos todos los cambios y archivos
+
+git commit -m "Texto explicativo" -> confirmamos los cambios
+
+git push -u origin main -> actualiza la rama "main" del repositorio en Github con nuestro repositorio local
+
+
+git init: Inicializa un nuevo repositorio Git en un directorio local.
+
+git clone: Clona un repositorio Git existente desde un servidor remoto a tu máquina local.
+
+git status: Muestra el estado de los archivos en tu directorio de trabajo y te informa sobre los cambios pendientes de ser confirmados.
+
+git add: Agrega archivos al área de preparación (staging) para ser incluidos en el próximo commit.
+
+git commit: Confirma (guarda) los cambios en tu repositorio local junto con un mensaje descriptivo.
+
+git pull: Obtiene los cambios más recientes de una rama remota y los fusiona en tu rama local.
+
+git push: Envía tus cambios confirmados a una rama remota.
+
+git branch: Muestra una lista de las ramas locales y resalta la rama actual.
+
+git checkout: Cambia entre ramas o versiones de archivos.
+
+git merge: Fusiona cambios de una rama en otra.
+
+git remote: Muestra una lista de repositorios remotos configurados en tu proyecto.
+
+git log: Muestra un registro de commits en la rama actual.
+
+git tag: Administra etiquetas para versiones específicas de tu proyecto.
+
+git reset: Deshace cambios confirmados en una rama.
+
+git fetch: Obtiene información sobre las ramas remotas y los commits disponibles, pero no fusiona cambios.
+
+git diff: Muestra las diferencias entre archivos sin confirmar en tu directorio de trabajo.
+
+git rm: Elimina archivos de tu directorio de trabajo y del seguimiento de Git.
+
+git stash: Almacena temporalmente cambios no confirmados.
+
+git config: Configura opciones de Git, como tu nombre de usuario y dirección de correo electrónico.
+
+git remote add: Agrega un nuevo repositorio remoto.
+
+git remote remove: Elimina un repositorio remoto.
+
+git push origin --delete <nombre-rama>: Elimina una rama remota.
