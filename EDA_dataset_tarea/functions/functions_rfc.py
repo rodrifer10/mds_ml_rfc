@@ -243,7 +243,7 @@ def corr_cat(df,target=None,target_transform=False):
     if target_transform:
         t_type = df[target].dtype
         df[target] = df[target].astype('string')
-        df_cat_string.append('fraud_bool')
+        df_cat_string.append(target)
 
     corr_cat = []
     vector = []
