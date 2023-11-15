@@ -1,21 +1,21 @@
-# mds_ml_rfc
+## mds_ml_rfc
 Machine Learning repository - Master in Data Science
 
-## Hi
-I'm Rodrigo.
+# Bienvenidos a mi repo de Github
 
-## Tarea: EDA_DataSet
+En este repositorio registro todo lo referente a mis clases de Machine Learning en el máster en Data Science que estoy cursando actualmente.
 
-El trabajo se encuentra en la carpeta ./EDA_dataset_tarea de este mismo repositorio personal, en el cual voy guardando el progreso de cada clase.
+***
 
-He decidido guardar las tareas en este mismo repositorio, mientras que generaré un nuevo repositorio y nuevos enviroments para cada práctica.
+# Práctica 1: EDA_DataSet
+
+### Repositorio de Github:
+El trabajo se encuentra en la carpeta ./EDA_dataset_tarea de mi repositorio personal, en el cual voy guardando el progreso de cada clase.
 
 El link del repo de github es el siguiente: https://github.com/rodrifer10/mds_ml_rfc.git
 
-
-### Autores:
-Rodrigo Fernández Campos - rodrigo.fernandezc@cunef.edu
-Ángel Blanco García - angel.blancog@cunef.edu
+### Autor:
+Rodrigo Fernández Campos - rodrigo.fernandezc@cunef.edu / rfc10.data@gmail.com
 
 
 
