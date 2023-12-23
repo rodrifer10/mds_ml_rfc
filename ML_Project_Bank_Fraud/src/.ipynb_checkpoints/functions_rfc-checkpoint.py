@@ -1,12 +1,28 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rc
 import seaborn as sns
 from sklearn.impute import KNNImputer
 from termcolor import colored, cprint
 import scipy.stats as ss
 import warnings
+import importlib
+from sklearn.metrics import balanced_accuracy_score, roc_auc_score, fbeta_score, make_scorer,\
+                            accuracy_score,average_precision_score, precision_recall_curve, roc_curve,\
+                            auc, recall_score, precision_score, confusion_matrix, f1_score, ConfusionMatrixDisplay
+import scikitplot as skplt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OrdinalEncoder
+from sklearn.preprocessing import StandardScaler
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import TargetEncoder
+from sklearn.pipeline import Pipeline
 
+# Indice:
+## 1. Funciones de la cátedra utilizadas (4)
+## 2. Funciones propias (15)
 
 ###-------------------------------- Funciones de la cátedra utilizadas ---------------------------------------
 def duplicate_columns(frame):
@@ -243,7 +259,7 @@ def corr_cat(df,target=None,target_transform=False):
     if target_transform:
         t_type = df[target].dtype
         df[target] = df[target].astype('string')
-        df_cat_string.append('fraud_bool')
+        df_cat_string.append(target)
 
     corr_cat = []
     vector = []
@@ -265,7 +281,7 @@ def corr_cat(df,target=None,target_transform=False):
 
 #####
     
-def double_plot(df, col_name, is_cont, target):
+def double_plot(df, col_name, is_cont, target, palette=['deepskyblue','crimson'], y_scale='log'):
     """
     ----------------------------------------------------------------------------------------------------------
     Función double_plot:
@@ -300,13 +316,13 @@ def double_plot(df, col_name, is_cont, target):
     plt.xticks(rotation = 90)
 
     if is_cont:
-        sns.boxplot(data=df, x=col_name, y=df[target].astype('string'), palette=['deepskyblue','crimson'], ax=ax2)
+        sns.boxplot(data=df, x=col_name, y=df[target].astype('string'), palette=palette, ax=ax2)
         ax2.set_ylabel('')
         ax2.set_title(col_name + ' by '+target)
     else:
         barplot2_df = df.groupby(col_name)[target].value_counts(normalize=True).to_frame('proportion').reset_index()
-        sns.barplot(data=barplot2_df, x=col_name, y='proportion', hue=barplot2_df[target].astype('string'), palette=['deepskyblue','crimson'], ax=ax2)
-        plt.yscale('log')
+        sns.barplot(data=barplot2_df, x=col_name, y='proportion', hue=barplot2_df[target].astype('string'), palette=palette, ax=ax2)
+        plt.yscale(y_scale)
         ax2.set_ylabel('Proportion')
         
         #Prueba descartada:
@@ -319,5 +335,469 @@ def double_plot(df, col_name, is_cont, target):
     ax2.set_xlabel(col_name)
     
     plt.tight_layout()
+
+
+######
+    
+def plot_corr(corr, title='Matriz de correlaciones', figsize=(14,8), target_text=False, annot_floor=0.4, annot_all=False):
+    """
+    ----------------------------------------------------------------------------------------------------------
+    Función plot_corr:
+    ----------------------------------------------------------------------------------------------------------
+    - Funcionamiento:
+        La función recibe una matriz de correlaciones y genera un gráfico tipo heatmap en base a ella.
+        Se pueden determinar el título, tamaño del gráfico, y que cuadrantes tengan o no el valor de la
+        correlación.
+    - Inputs:
+        - corr: Dataframe de la matriz de correlaciones
+        - title: Título elegido. Por defecto será 'Matriz de correlaciones'
+        - figsize: Tamaño del gráfico
+        - target_text: Se debe activar si se desean mostrar todos los valores en los cuadrantes de la última
+        fila de la matriz, en mi caso usada para colocar a la variable target.
+        - annot_floor: Valor desde el cual se pretenden mostrar los valores de las correlaciones en los
+        cuadrantes de la matriz.
+        - annot_all: Si es verdadero, se muestran los valores en todos los cuadrantes de la matriz.
+    """
+    fig, ax = plt.subplots(figsize=figsize)
+    sns.heatmap(corr, annot=True, fmt='.1f', cmap='icefire', ax=ax, vmin=-1, vmax=1)
+    for t in ax.texts:
+        if ((float(t.get_text())>=annot_floor) | (float(t.get_text())<=-annot_floor)) & (float(t.get_text())<1) :
+            t.set_text(t.get_text()) # solo quiero que muestre las anotaciones para correlaciones mayores a 0.4, para identificarlos. El resto no me es muy relevante
+        elif (t in ax.texts[-len(corr.iloc[0]):len(list(ax.texts))]) & (target_text) :
+            t.set_text(t.get_text()) # además me interesa mostrar todas las correlaciones con mi variable objetivo, en la última fila
+        elif annot_all==False:
+            t.set_text("")
+    plt.title(title, fontdict={'size':'20'})
+    plt.show()
+    
+########
+
+def highlight_max(s, props=''):
+    """
+    Función básica para dar formato al valor máximo de cada fila de un DF.
+        - s: valores a evaluar
+        - props: detalle con las propiedades de estilos que se le quiere dar a la celda
+    """
+    return np.where(abs(s) == np.nanmax(abs(s.values)), props, '')
+
+#######
+
+def y_pred_base_model(y_train, X_test):
+    """
+    ----------------------------------------------------------------------------------------------------------
+    Función y_pred_base_model:
+    ----------------------------------------------------------------------------------------------------------
+    - Funcionamiento:
+        La función recibe dos DataFrames (o Serie en caso de y_train), analiza cual es la clase mayoritaria
+        del set de datos, y devuelve como output la predicción del modelo base para el set de test.
+    - Inputs:
+        - y_train: Target del set de entrenamiento. DataFrame o Series.
+        - X_test: DataFrame X del set de test (o validación de ser el caso).
+    - Return:
+        La función devuelve un array de numpy con la predicción del modelo base para los datos otorgados.
+    """
+    value_max = y_train.value_counts(normalize=True).argmax()
+    size = X_test.index.value_counts().size
+    y_pred_base = np.random.choice([value_max, abs(1-value_max)], size=size, p=[abs(1-value_max),value_max])
+                  # preparé la función para dar valores random en otros casos, pero en este caso los valores serán una probabilidad fija.
+    return y_pred_base
+
+########
+
+def metrics_summ(y_true, y_pred):
+    """
+    ----------------------------------------------------------------------------------------------------------
+    Función metrics_summ:
+    ----------------------------------------------------------------------------------------------------------
+    - Funcionamiento:
+        La función recibe dos arrays/Series, al igual que cualquier función de métricas de SKLearn. Con ellas
+        calcula una serie de métricas y las muestra en pantalla. Estas métricas son:
+            - Accuracy
+            - Balanced Accuracy
+            - F2 Score
+            - F1 Score
+            - Precision
+            - Recall
+            - Confusion Matrix
+    - Inputs:
+        - y_true: array/Serie con los valores reales de la variable target. Es decir, el y_test o y_val.
+        - y_pred: array/Serie con los valores predecidos por el modelo.
+    """
+    print(f'''
+Accuracy: {accuracy_score(y_true,y_pred):.5f}
+Balanced Accuracy: {balanced_accuracy_score(y_true,y_pred):.5f}
+\033[1mF2 score: {fbeta_score(y_true,y_pred, beta=2):.5f}\033[0m
+\033[1mF1 score: {f1_score(y_true,y_pred):.5f}\033[0m
+Precision: {precision_score(y_true,y_pred):.5f}
+Recall: {recall_score(y_true,y_pred):.5f}
+
+Confusion Matrix:
+{confusion_matrix(y_true,y_pred)}''')
+
+########
+
+def roc_curve_plot(y_true=None, y_pred=None, title='ROC Curve', model_name='Model', figsize=(7,5)):
+    """
+    ----------------------------------------------------------------------------------------------------------
+    Función roc_curve_plot:
+    ----------------------------------------------------------------------------------------------------------
+    - Funcionamiento:
+        Función basada en un ejemplo de la cátedra, en la que se grafica la curva ROC y el punto óptimo entre
+        el true positive rate y el false negative rate. Además se informa el valor de dicho punto, el threshold
+        que le corresponde, el coeficiente de GINI y el área bajo la curva.
+    - Imputs:
+        - y_true: array/Serie con los valores reales de la variable objetivo (y_test o y_val)
+        - y_pred: array/Serie con los valores predecidos por el modelo.
+        - title: Título que se le quiera dar al gráfico.
+        - model_name: Nombre del modelo implementado para mostrar en el gráfico como leyenda.
+        - figsize: tupla con el tamaño deseado para el gráfico.
+    """
+    if ((y_true is None) or (y_pred is None)):
+        print(u'\nFaltan parámetros por pasar a la función')
+        return 1
+
+    fpr, tpr, thresholds = roc_curve(y_true, y_pred)
+    roc_auc = auc(fpr, tpr)
+    gmeans = np.sqrt(tpr * (1-fpr))
+    ix = np.argmax(gmeans)
+    print('Best Threshold = %f, G-Mean = %.3f' % (thresholds[ix], gmeans[ix]))
+    
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.plot(fpr, tpr, marker='.', color='dodgerblue', lw=2, label=f'{model_name} (area = %0.3f)' % roc_auc)
+    ax.plot([0, 1], [0, 1], color='crimson', lw=3, linestyle='--', label='No Skill')
+    plt.scatter(fpr[ix], tpr[ix], s=100, marker='o', color='black', label='Best', zorder=2)
+    ax.set_xlim([-0.025, 1.025])
+    ax.set_ylim([-0.025, 1.025])
+    ax.set_xlabel('False Positive Rate')
+    ax.set_ylabel('True Positive Rate')
+    ax.set_title(title, fontdict={'fontsize':18})
+    ax.legend(loc="lower right")
+    ax.grid(alpha=0.5)
+
+    gini = (2.0 * roc_auc) - 1.0
+
+    print('\n*************************************************************')
+    print(u'\nEl coeficiente de GINI es: %0.2f' % gini)
+    print(u'\nEl área por debajo de la curva ROC es: %0.4f' %roc_auc)
+    print('\n*************************************************************')
+
+########
+
+def pr_curve_plot(y_true, y_pred_proba, title='Precision-Recall Curve', f_score_beta=1, model_name='Model', figsize=(7,5)):
+    """
+    ----------------------------------------------------------------------------------------------------------
+    Función pr_curve_plot:
+    ----------------------------------------------------------------------------------------------------------
+    - Funcionamiento:
+        Función basada en un ejemplo de la cátedra, en la que se grafica la curva Precision-Recall y el punto
+        con la combinación óptima de ambos para el F score deseado. Además se informan tanto el threshold
+        correspondiente a esa mejor combinación, el F score logrado y el área bajo la curva del modelo.
+    - Imputs:
+        - y_true: array/Serie con los valores reales de la variable objetivo (y_test o y_val)
+        - y_pred_proba: array/Serie con las probabilidades predecidas por el modelo.
+        - title: Título que se le quiera dar al gráfico.
+        - f_score_beta: Beta para el F score. Normalmente 0.5, 1 o 2.
+        - model_name: Nombre del modelo implementado para mostrar en el gráfico como leyenda.
+        - figsize: tupla con el tamaño deseado para el gráfico.
+    """
+    precision, recall, thresholds = precision_recall_curve(y_true, y_pred_proba)
+
+    f_score = ((1+(f_score_beta**2)) * precision * recall) / ((f_score_beta**2) * precision + recall)
+    ix = np.argmax(f_score)
+    auc_rp = auc(recall, precision)
+    print(f'Best Threshold = {thresholds[ix]:.5f}, F{f_score_beta} Score = {f_score[ix]:.3f}, AUC = {auc_rp:.4f}')
+    
+    #plt.ylim([0,1])
+    fig, ax = plt.subplots(figsize=figsize)
+    no_skill= len(y_true[y_true==1])/len(y_true)
+    ax.plot([0,1],[no_skill, no_skill], linestyle='--', label='No Skill', color='crimson', lw=3)
+    ax.plot(recall, precision, marker='.', label=model_name, color='dodgerblue')
+    ax.scatter(recall[ix], precision[ix], s=100, marker='o', color='black', label=f'Best', zorder=2)
+    ax.set_title(str(title), fontdict={'fontsize':18})
+    ax.set_ylim([0,1.01])
+    ax.set_xlabel('Recall')
+    ax.set_ylabel('Precision')
+    ax.legend()
+    ax.grid(alpha=0.5)
+
+########
+
+def plot_recall_precission(recall_precision, y_true, y_pred_proba):
+    """
+    ----------------------------------------------------------------------------------------------------------
+    Función plot_recall_precission:
+    ----------------------------------------------------------------------------------------------------------
+    - Funcionamiento:
+        Función basada en un ejemplo de la cátedra, en la que se grafican diferentes métricas del modelo en
+        base a los distintos threshold posibles para determinar el valor de la clase objetivo. Las métricas
+        que se grafican son:
+            - Precision
+            - Recall
+            - F2 Score
+            - F1 Score
+        Además, también se muestra en la leyenda el threshold óptimo para maximizar el F2 Score.
+    - Imputs:
+        - recall_precision: lista de listas en las que cada elemento representa un threshold con sus
+        respectivas méticas dentro. Es decir que cada lista dentro de la lista padre contendrá 5 elementos:
+        el threhold y las 4 métricas nombradas.
+    """
+    plt.figure(figsize=(15, 5))
+    ax = sns.pointplot(x = [round(element[0],2) for element in recall_precision], y=[element[1] for element in recall_precision],
+                     color="red", label='Recall', scale=1)
+    ax = sns.pointplot(x = [round(element[0],2) for element in recall_precision], y=[element[2] for element in recall_precision],
+                     color="blue", label='Precission')
+    ax = sns.pointplot(x = [round(element[0],2) for element in recall_precision], y=[element[3] for element in recall_precision],
+                     color="gold", label='F2 Score', lw=2)
+    ax = sns.pointplot(x = [round(element[0],2) for element in recall_precision], y=[element[4] for element in recall_precision],
+                     color="limegreen", label='F1 Score', lw=1)
+    
+    precision, recall, thresholds = precision_recall_curve(y_true, y_pred_proba)
+    f2_score = ((1+(2**2)) * precision * recall) / ((2**2) * precision + recall)
+    ix = np.argmax(f2_score)
+    
+    ax.scatter((round(thresholds[ix],2)*100), f2_score[ix], s=100, marker='o', color='black', label=f'Best F2 (th={thresholds[ix]:.3f}, f2={f2_score[ix]:.3f})', zorder=2)
+    ax.set_title('Recall & Precision VS Threshold', fontdict={'fontsize':20})
+    ax.set_xlabel('threshold')
+    ax.set_ylabel('probability')
+    ax.legend()
+    
+    labels = ax.get_xticklabels()
+    for i,l in enumerate(labels):
+        if(i%5 == 0) or (i%5 ==1) or (i%5 == 2) or (i%5 == 3):
+            labels[i] = '' # skip even labels
+            ax.set_xticklabels(labels, rotation=45, fontdict={'size': 10})
+    plt.show()
+
+########
+
+def plot_cmatrix(y_true, y_pred, title='Confusion Matrix', figsize=(20,6)):
+    """
+    ----------------------------------------------------------------------------------------------------------
+    Función plot_cmatrix:
+    ----------------------------------------------------------------------------------------------------------
+    - Funcionamiento:
+        Función que grafica la matriz de confusión en base a datos reales y predicciones de la variable target
+        tanto en valores absolutos como en su forma normalizada.
+    - Imputs:
+        - y_true: array/Serie con los valores reales de la variable objetivo (y_test o y_val)
+        - y_pred_proba: array/Serie con las probabilidades predecidas por el modelo.
+        - title: Título que se le quiera dar al gráfico.
+        - figsize: tupla con el tamaño deseado para la suma de ambos gráficos.
+    """    
+    fig, (ax1, ax2) = plt.subplots(1,2, figsize=figsize)
+    ConfusionMatrixDisplay(confusion_matrix).from_predictions(y_true,y_pred, cmap='Blues', values_format=',.0f', ax=ax1)
+    ConfusionMatrixDisplay(confusion_matrix).from_predictions(y_true,y_pred, cmap='Blues', normalize='true', values_format='.2%', ax=ax2)
+    ax1.set_title(f'{title}', fontdict={'fontsize':18})
+    ax2.set_title(f'{title} - Normalized', fontdict={'fontsize':18})
+    ax1.set_xlabel('Predicted Label',fontdict={'fontsize':15})
+    ax2.set_xlabel('Predicted Label',fontdict={'fontsize':15})
+    ax1.set_ylabel('True Label',fontdict={'fontsize':15})
+    ax2.set_ylabel('True Label',fontdict={'fontsize':15})
+    rc('font', size=14)
+    rc('xtick', labelsize=12)
+    rc('ytick', labelsize=12)
+    plt.show()
+
+#######
+
+def k_means_search(df, clusters_max, figsize=(6, 6)):
+    """
+    ----------------------------------------------------------------------------------------------------------
+    Función k_means_search:
+    ----------------------------------------------------------------------------------------------------------
+    - Funcionamiento:
+        Función que ejecuta el modelo no supervisado k-means sobre el DataFrame introducido tantas veces como
+        la cantidad máxima de clusters que se requiera analizar y devuelve un gráfico que muestra la suma de
+        los cuadrados de la distancia para cada cantidad de clusters. En función a dicho gráfico se puede
+        determinar la cantidad óptima de clusters que necesitamos para nuestro análisis.
+    - Imputs:
+        - df: DataFrame de Pandas sobre el que se ejecuta el K-Means
+        - clusters_max: número máximo de clusters que se quiere analizar.
+        - figsize: tupla con el tamaño deseado para la suma de ambos gráficos.
+    """
+    sse = []
+    list_k = list(range(1, clusters_max+1))
+
+    for k in list_k:
+        km = KMeans(n_clusters=k)
+        km.fit(df)
+        sse.append(km.inertia_)
+
+    # Plot sse against k
+    plt.figure(figsize=figsize)
+    plt.plot(list_k, sse, '-o')
+    plt.xlabel(f'Number of clusters {k}')
+    plt.ylabel('Sum of squared distance')
+    plt.show()
+
+    
+#########
+
+def ex_preprocessing(df, cat_transf='mix', scale=True):
+    """
+    ----------------------------------------------------------------------------------------------------------
+    Función preprocessing:
+    ----------------------------------------------------------------------------------------------------------
+    - Funcionamiento: Función que recibe un dataframe y realiza el preprocesamiento en base a los parámetros
+    que el usuario elija.
+    - Inputs:
+        - df: DataFrame de pandas sobre el que se generará el objeto preprocessor
+        - cat_transf: metogolodía de transformación de variables. Puede tomar los siguientes valores:
+            * 'mix': mix de encodings personalizado para caso fraude, con onehot, ordinal y mean encoding.
+            * 'orginal': se aplica Ordinal Encoding
+            * 'onehot': se aplica One Hot Encoding
+            * 'mean': se aplica Mean Encoder (TargetScorer en SKLearn)
+    - Output: devuelve un objeto preprocessor listo para ser instanciado.
+    """
+    
+    if scale:
+        numeric_transformer = Pipeline(steps=[
+            ('scaler', StandardScaler())])
+    else:
+        numeric_transformer = Pipeline(steps=[
+            ('pass', 'passthrough')])
+    
+    if (cat_transf=='ordinal') | (cat_transf=='mix'):
+        categorical_transformer = Pipeline(steps=[
+            ('ordinal', OrdinalEncoder())])
+    elif cat_transf=='onehot':
+        categorical_transformer = Pipeline(steps=[
+            ('onehot', OneHotEncoder(sparse=False, sparse_output=False))])
+    elif cat_transf=='mean':
+        categorical_transformer = Pipeline(steps=[
+            ('mean_encoder', TargetEncoder())])
+    
+    onehot_transformer = Pipeline(steps=[
+        ('onehot', OneHotEncoder(sparse=False, sparse_output=False))])
+    mean_transformer = Pipeline(steps=[
+        ('mean_encoder', TargetEncoder())])
+
+    df_bool, df_cat, df_num = tipos_vars(df,False)
+    numeric_features = df.select_dtypes(include=['int64', 'float64']).drop(df_bool, axis=1).columns
+    boolean_features = df[df_bool].columns
+    
+    if cat_transf=='mix':
+        categorical_features = df.select_dtypes(include=['object']).drop(['device_os'], axis=1).columns
+    else:
+        categorical_features = df.select_dtypes(include=['object']).columns
+    
+    device_feature = np.array(['device_os'])
+    payment_feature = np.array(['payment_type'])
+    
+    if cat_transf=='mix':
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ('num',numeric_transformer, numeric_features),
+                ('cat', categorical_transformer, categorical_features),
+                ('device', onehot_transformer, device_feature),
+                ('bool','passthrough', boolean_features)]
+            ,remainder='passthrough'
+            ,verbose_feature_names_out=False).set_output(transform="pandas")
+    else:
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ('num',numeric_transformer, numeric_features),
+                ('cat', categorical_transformer, categorical_features),
+                ('bool','passthrough', boolean_features)]
+            ,remainder='passthrough'
+            ,verbose_feature_names_out=False).set_output(transform="pandas")
+    
+    return preprocessor
+
+
+######################
+
+def preprocessing(df, cat_transf='mix', scale=True):
+    """
+    ----------------------------------------------------------------------------------------------------------
+    Función preprocessing:
+    ----------------------------------------------------------------------------------------------------------
+    - Funcionamiento: Función que recibe un dataframe y realiza el preprocesamiento en base a los parámetros
+    que el usuario elija.
+    - Inputs:
+        - df: DataFrame de pandas sobre el que se generará el objeto preprocessor
+        - cat_transf: metogolodía de transformación de variables. Puede tomar los siguientes valores:
+            * 'mix': mix de encodings personalizado para caso fraude, con onehot, ordinal y mean encoding.
+            * 'orginal': se aplica Ordinal Encoding
+            * 'onehot': se aplica One Hot Encoding
+            * 'mean': se aplica Mean Encoder (TargetScorer en SKLearn)
+    - Output: devuelve un objeto preprocessor listo para ser instanciado.
+    """
+    if scale:
+        numeric_transformer = Pipeline(steps=[
+            ('scaler', StandardScaler())])
+    else:
+        numeric_transformer = Pipeline(steps=[
+            ('pass', 'passthrough')])
+    
+    if (cat_transf=='ordinal') | (cat_transf=='mix'):
+        categorical_transformer = Pipeline(steps=[
+            ('ordinal', OrdinalEncoder())])
+    elif cat_transf=='onehot':
+        categorical_transformer = Pipeline(steps=[
+            ('onehot', OneHotEncoder(sparse=False, sparse_output=False))])
+    elif cat_transf=='mean':
+        categorical_transformer = Pipeline(steps=[
+            ('mean_encoder', TargetEncoder())])
+    
+    onehot_transformer = Pipeline(steps=[
+        ('onehot', OneHotEncoder(sparse=False, sparse_output=False))])
+    mean_transformer = Pipeline(steps=[
+        ('mean_encoder', TargetEncoder())])
+
+    df_bool, df_cat, df_num = tipos_vars(df,False)
+    numeric_features = df.select_dtypes(include=['int64', 'float64']).drop(df_bool, axis=1).columns
+    boolean_features = df[df_bool].columns
+    
+    if cat_transf=='mix':
+        categorical_features = df.select_dtypes(include=['object']).drop(['device_os','payment_type'], axis=1).columns
+    else:
+        categorical_features = df.select_dtypes(include=['object']).columns
+    
+    device_feature = np.array(['device_os'])
+    payment_feature = np.array(['payment_type'])
+    
+    if cat_transf=='mix':
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ('num',numeric_transformer, numeric_features),
+                ('cat', categorical_transformer, categorical_features),
+                ('device', onehot_transformer, device_feature),
+                ('payment', mean_transformer, payment_feature),
+                ('bool','passthrough', boolean_features)]
+            ,remainder='passthrough'
+            ,verbose_feature_names_out=False).set_output(transform="pandas")
+    else:
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ('num',numeric_transformer, numeric_features),
+                ('cat', categorical_transformer, categorical_features),
+                ('bool','passthrough', boolean_features)]
+            ,remainder='passthrough'
+            ,verbose_feature_names_out=False).set_output(transform="pandas")
+    
+    return preprocessor
+
+########
+
+def feature_selection(df, add=[]):
+    """
+    ----------------------------------------------------------------------------------------------------------
+    Función feature_selection:
+    ----------------------------------------------------------------------------------------------------------
+    - Funcionamiento: Recibe un DataFrame y un opcional de columnas extras a eliminar. Devuelve un DataFrame
+    con las columnas del feature selection eliminadas, además de la columna extra en caso de haberse introducido.
+    - Inputs:
+        - df: DataFrame de Pandas al que se le reducirá el número de variables
+        - add: argumento opcional en el que se pueden incluir más variables que se quieran eliminar
+    - Return: DataFrame de pandas con las columnas reducidas según el feature selection aplicado.
+    """
+    drop = ['source','velocity_24h','velocity_6h','phone_mobile_valid', 'foreign_request']
+    if add != []:
+        drop+=add
+    df_new = df.drop(drop, axis=1) #'device_fraud_count',
+    return df_new
+
+
 
 

@@ -7,10 +7,10 @@ En este repositorio registro todo lo referente a mis clases de Machine Learning 
 
 ***
 
-# Práctica 1: EDA_DataSet
+# Práctica de Machine Learning:
 
 ### Repositorio de Github:
-El trabajo se encuentra en la carpeta ./EDA_dataset_tarea de mi repositorio personal, en el cual voy guardando el progreso de cada clase.
+El trabajo se encuentra en la carpeta ./ML_Project_Bank_Fraud de mi repositorio personal, en el cual voy guardando el progreso de cada clase.
 
 El link del repo de github es el siguiente: https://github.com/rodrifer10/mds_ml_rfc.git
 
