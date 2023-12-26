@@ -7509,14 +7509,38 @@ a.anchor-link {
 <p>Vamos a trabajar con el dataset 'Base', uno de los 6 creados por los autores. Cada uno cuenta con 1 millón de instancias, incluido el que usaremos. Los datos han sido recavados en un período de 8 meses.</p>
 <p>El link de Kaggle al post original del dataset es el siguiente: <a href="https://www.kaggle.com/datasets/sgpjesus/bank-account-fraud-dataset-neurips-2022/data">https://www.kaggle.com/datasets/sgpjesus/bank-account-fraud-dataset-neurips-2022/data</a></p>
 <p>Además, en la carpeta "docs" se encuentra el PDF descriptivo de los datos explicado por los autores.</p>
-<h3 id="Objetivos-del-Trabajo:">Objetivos del Trabajo:<a class="anchor-link" href="#Objetivos-del-Trabajo:">¶</a></h3><p>Los principales objetivos de esta primera práctica serán:</p>
-<ul>
+<h3 id="Objetivos-del-Trabajo:">Objetivos del Trabajo:<a class="anchor-link" href="#Objetivos-del-Trabajo:">¶</a></h3><ul>
+<li><u>Generales</u>:<ul>
+<li>Poner en práctica los conocimientos aprendidos en la materia de Machine Learning en un proyecto "real"</li>
+<li>Aprender todo lo posible en relación al análisis de los datos, su procesamiento y una serie de modelos de clasificación que utilizaremos</li>
+<li>Entender el funcionamiento de un proceso de modelado de un proyecto real en primera persona y en parte de manera autodidácta, con pruebas y errores</li>
+</ul>
+</li>
+</ul>
+<ol>
+<li><u>EDA</u>:<ul>
 <li>Conocer el DataSet con el que vamos a trabajar</li>
 <li>Realizar un análisis de las variables que lo componen y un análisis general se sus instancias</li>
 <li>Comprender la distribución de los datos, las relaciones entre variables y sobre todo con la variable Target</li>
-<li>Depurarlo con el fin de aplicar modelos de Machine Learning sobre él en próximas entregas</li>
 <li>Dar concluisiones sobre cómo se conforma, sus principales componentes y qué podemos observar con un análisis exploratorio</li>
 </ul>
+</li>
+<li><u>Aplicación de modelos predictivos</u>:<ul>
+<li>Realizar exitósamente todos los procedimientos de procesamiento de variables y selección de las mismas para poder aplicar modelos sin problemas a los datos</li>
+<li>Realizar comparaciones y entender porqué determinados modelos funcionan mejor que otros</li>
+<li>Determinar las mejores maneras de medir los resultados de las aplicaciones en cada caso</li>
+<li>Entender como tratar con datos desbalanceados, que técnicas se pueden utilizar y constatar si su aplicación realmente es efectiva, al menos en este caso</li>
+<li>Verificar la aplicación de modelos en distintas configuraciones de datos para ver como cambian las métricas elegidas</li>
+<li>Lograr una mejora de modelos mediante el uso de técnicas como el Cross Validation y el Hyperparameters tunning</li>
+<li>Aplicar exitósamente el/los modelo/s elegido/s, medirlo y sacar conclusiones en base a los resultados obtenidos</li>
+</ul>
+</li>
+<li><u>Explicabilidad</u>:<ul>
+<li>Sección en la que buscaremos dar explicaciones en relación al funcionamiento interno del modelo, mediante el uso de otros modelos específicos para estos objetivos</li>
+<li>La idea será comprender de que manera funciona, cuales son las variables más y menos importantes, de que depende que el modelo tome una decisión u otra según el caso que esté evaluando, entre otros temas interesantes a tratar.</li>
+</ul>
+</li>
+</ol>
 <h2 id="Business-Case:">Business Case:<a class="anchor-link" href="#Business-Case:">¶</a></h2><p>En la aplicación de un modelo de detección de fraude para aplicaciones bancarias se incluyen varios aspectos a tener en cuenta a la hora de desarrollar modelos de Machine Learning, tales como pueden ser el desbalanceo de los datos, los objetivos particulares de negocio del análisis o la capacidad de investigación sobre las alertas de detección que tenga la organización en cuestión. Todos estos conceptos deberán ser tenidos en cuenta no solo en el análisis, sino también en la implementación técnica, ya sea a la hora de explorar los datos como en el modelado y medición de resultados.</p>
 <p>Con respecto a nuestro análisis, al tratarse de un modelo genérico y anonimizado, no contamos con directrices o información específica de un área de negocios, por lo que llevaremos adelante una serie de supuestos para determinar los lineamientos a seguir en cada fase del proyecto. Todos ellos serán explicados a continuación, intentando acercarnos mediante la lógica de negocio lo más posible a la realidad de una empresa que busca aplicar un modelo de detección de fraudes, con los beneficios y riesgos que esto implica, pero tratando de mejorar una situación inicial prácticamente sin modelo o con alguna regla muy simple (en nuestro caso, lo que llamaremos "Modelo Base").</p>
 <p>Nuestro caso buscará predecir comportamientos fraudulentos de una mejor manera que la que lo harían modelos como series de reglas por ejemplo, los cuales podrán reemplazarse o funcionar de manera conjunta con nuestro modelo de Machine Learning, pero la ventaja que tendremos al aplicar este tipo de modelos, además de la automatización y dinamismo del mismo, será sobre todo el poder predecir patrones de conductas fraudulentas más complejos en donde actúan relaciones entre muchas más variables que las que un humano manualmente podría diseñar.</p>
@@ -11341,6 +11365,22 @@ device_distinct_emails_8w              int64
 month                                  int64
 dtype: object</pre>
 </div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4bbd4833-f271-4bf3-8487-972b77d5748b">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="Aclaraci%C3%B3n-sobre-posible-variable-futura">Aclaración sobre posible variable futura<a class="anchor-link" href="#Aclaraci%C3%B3n-sobre-posible-variable-futura">¶</a></h3><p>Existe de entre todas las variables del sataset una que me genera ciertas dudas. La misma es 'day_since_request', cuya descripción nos comenta que mide la cantidad de días que transcurrieron desde que se realizó la aplicación. Aquí yo sinceramente pediría una explicación a las personas de negocio para entender en que momento se activaría el modelo y recibiría la información de la aplicación. Me explico:</p>
+<ul>
+<li>Si existe un proceso previo a aplicar el modelo, como podría ser cualquier procesamiento de la aplicación previo a buscar realizar un análisis de posibles fraudes, entonces es correcto considerar a esta variable para nuestro análisis.</li>
+<li>Pero en cambio, si el caso fuese que al instante en el que se recibe una aplicación, pasa directamente a nuestro modelo sin ningún paso anterior, entonces esta podría ser una variable a descartar, ya que entiendo que la cantidad de días sería siempre 0. Excepto a que se realizaran nuevos chequeos con el modelo a posteriori, en donde nuevamente ahí si podría ser mantenida.</li>
+</ul>
+<p>En todo caso, es un problema que debería resolverse solicitando más información y entendiendo bien los tiempos y objetivos de nuestro modelo dentro de un proceso más global. Como no poseemos esa información, seré conservador y mantendré la variable, tomando como posible el primer escenario planteado, en donde el modelo se aplica en un proceso posterior al de la recepción de la aplicación y no de manera inmediata.</p>
 </div>
 </div>
 </div>
