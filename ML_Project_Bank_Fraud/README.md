@@ -14,8 +14,11 @@ El link del repo de github es el siguiente: https://github.com/rodrifer10/mds_ml
 ### Autor:
 Rodrigo Fernández Campos - rodrigo.fernandezc@cunef.edu / rfc10.data@gmail.com
 
+***
+###  De que trata el proyecto:
+En este proyecto se buscará aplicar los conocimientos adquiridos en la materia para generar un modelo de detección de fraude en aplicaciones para apertura de cuentas bancarias. Se realizará un análisis exploratorio de los datos, el preprocesamiento de los mismos, se tratará el desbalanceo de la clase target, se aplicarán modelos de ML y se explicará su funcionamiento, además de los resultados obtenidos.
 
-#### Los principales objetivos de esta práctica son:
+### Los principales objetivos de esta práctica son:
 
 * <u>Generales</u>:
     * Poner en práctica los conocimientos aprendidos en la materia de Machine Learning en un proyecto "real"
@@ -39,7 +42,7 @@ Rodrigo Fernández Campos - rodrigo.fernandezc@cunef.edu / rfc10.data@gmail.com
     * La idea será comprender de que manera funciona, cuales son las variables más y menos importantes, de que depende que el modelo tome una decisión u otra según el caso que esté evaluando, entre otros temas interesantes a tratar.
 
 
-#### Composición del repositorio:
+### Composición del repositorio:
 
 Este directorio está compuesto por las siguientes carpetas:
 * data: carpeta contenedora de todos los archivos con datos del proyecto. Dentro de ella se encuentran 3 carpetas:
