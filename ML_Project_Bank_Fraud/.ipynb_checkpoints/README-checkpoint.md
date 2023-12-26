@@ -39,7 +39,7 @@ Rodrigo Fernández Campos - rodrigo.fernandezc@cunef.edu / rfc10.data@gmail.com
     * La idea será comprender de que manera funciona, cuales son las variables más y menos importantes, de que depende que el modelo tome una decisión u otra según el caso que esté evaluando, entre otros temas interesantes a tratar.
 
 
-#### Composición del repositorio específico del EDA:
+#### Composición del repositorio:
 
 Este directorio está compuesto por las siguientes carpetas:
 * data: carpeta contenedora de todos los archivos con datos del proyecto. Dentro de ella se encuentran 3 carpetas:
