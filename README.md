@@ -10,7 +10,7 @@ En este repositorio registro todo lo referente a mis clases de Machine Learning 
 # Práctica de Machine Learning:
 
 ### Repositorio de Github:
-El trabajo se encuentra en la carpeta ./ML_Project_Bank_Fraud de mi repositorio personal, en el cual voy guardando el progreso de cada clase.
+La práctica 3 se encuentra en la carpeta ./GAM_ML3 de mi repositorio personal, en el cual voy guardando el progreso de cada clase.
 
 El link del repo de github es el siguiente: https://github.com/rodrifer10/mds_ml_rfc.git
 
